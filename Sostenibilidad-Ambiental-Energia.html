@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environmental Sustainability of Energy Systems</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #10b981;
+            --border: #e2e8f0;
+            --font-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            
+            --score-1: #ef4444;
+            --score-2: #f97316;
+            --score-3: #eab308;
+            --score-4: #84cc16;
+            --score-5: #15803d;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .titles h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
+        .titles h2 { margin: 0.25rem 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 400; }
+
+        .lang-toggle {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--border);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .lang-btn {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            background: transparent;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto 4rem;
+            padding: 0 2rem;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px -5px rgba(0,0,0,0.05);
+            position: relative;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            gap: 12px;
+        }
+
+        .color-legend {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 10px;
+        }
+        .legend-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: help;
+            margin-bottom: 4px;
+            text-decoration: underline dotted #cbd5e1;
+        }
+        .legend-bar {
+            width: 220px;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #ef4444, #f97316, #eab308, #84cc16, #15803d);
+            margin: 4px 0;
+        }
+        .legend-labels {
+            width: 220px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .axis-label { font-size: 10px; font-weight: 600; fill: #64748b; }
+        .axis-sublabel { font-size: 9.5px; fill: #94a3b8; font-weight: 500; }
+        .axis-title { font-size: 14px; font-weight: 700; fill: #1e293b; cursor: help; }
+        .grid-line { stroke: rgba(255,255,255,0.4); stroke-width: 1; }
+        
+        .bubble { cursor: pointer; transition: transform 0.2s; }
+        .bubble:hover { transform: scale(1.05); }
+        .bubble-halo { fill: none; stroke: currentColor; stroke-width: 2; opacity: 0.3; }
+        .bubble-icon { fill: white; pointer-events: none; font-size: 14px; text-anchor: middle; dominant-baseline: middle; }
+        .bubble-text-label { font-size: 10px; fill: #334155; font-weight: 600; text-anchor: middle; }
+
+        .tooltip {
+            position: fixed;
+            background: rgba(15, 23, 42, 0.95);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 280px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .tech-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px -5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 2rem;
+            border: 1px solid var(--border);
+            height: calc(100vh - 4rem);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Centered vertical placeholder alignment */
+        .card-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .card-header { border-bottom: 2px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .card-title { font-size: 1.4rem; font-weight: 700; margin: 0; color: #0f172a; }
+        .card-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 1rem 0; }
+        .metric { text-align: center; padding: 0.5rem; border-radius: 8px; background: #f1f5f9; }
+        .metric-val { display: block; font-weight: 700; font-size: 1.1rem; }
+        .metric-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+        
+        .overall-score { 
+            background: var(--accent); color: white; padding: 0.5rem; border-radius: 8px; 
+            text-align: center; font-weight: 700; margin-bottom: 1rem;
+        }
+
+        .section-title { font-weight: 700; font-size: 0.9rem; text-transform: uppercase; color: var(--text-muted); margin-top: 1.5rem; }
+        .bullets { margin: 0.5rem 0; padding-left: 1.25rem; font-size: 0.9rem; color: #334155; }
+        .bullets li { margin-bottom: 0.5rem; }
+
+        .subsystems { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+        .subsystems summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--accent); }
+        .subsystems-list { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.85rem; columns: 2; }
+        .subsystems-list li { padding: 2px 0; border-bottom: 1px dashed #f1f5f9; }
+
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; }
+            .tech-card { position: static; margin-top: 2rem; height: auto; min-height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="titles">
+        <h1 id="ui-title">Environmental Sustainability of Energy Systems</h1>
+        <h2 id="ui-subtitle">Three ecological principles: Renewable, Clean, Harmless</h2>
+    </div>
+    <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
+        <button class="lang-btn" onclick="setLanguage('es')">ES</button>
+    </div>
+</header>
+
+<main>
+    <div class="chart-container" id="chart-area">
+        <div class="chart-controls">
+            <div class="color-legend">
+                <span class="legend-title" id="ui-legend-title" onmouseover="showDef('color', event)" onmouseout="hideDef()">Harmless</span>
+                <div class="legend-bar"></div>
+                <div class="legend-labels">
+                    <span id="ui-legend-low">More harm</span>
+                    <span id="ui-legend-high">Less harm</span>
+                </div>
+            </div>
+        </div>
+
+        <svg id="svg-chart" viewBox="0 0 600 500" preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <linearGradient id="pathway-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#fca5a5; stop-opacity:0.4" />
+                    <stop offset="100%" style="stop-color:#86efac; stop-opacity:0.4" />
+                </linearGradient>
+            </defs>
+            <rect x="60" y="50" width="490" height="390" fill="url(#pathway-grad)" rx="8" />
+            <g id="grid-group"></g>
+            <g id="axes-group"></g>
+            <g id="ideal-marker" transform="translate(550, 50)">
+                <path d="M 0,-8 L 2.4,-2.4 L 8,0 L 2.4,2.4 L 0,8 L -2.4,2.4 L -8,0 L -2.4,-2.4 Z" fill="#fbbf24" stroke="#d97706" />
+                <text y="20" text-anchor="end" class="axis-label" id="ui-ideal-label" style="font-weight:bold; fill:#d97706;">Ideal Sustainability</text>
+            </g>
+            <g id="bubbles-group"></g>
+        </svg>
+    </div>
+
+    <aside id="info-panel">
+        <div id="tech-card-content" class="tech-card">
+            <div class="card-placeholder" id="ui-placeholder">Select a technology to see details</div>
+        </div>
+    </aside>
+</main>
+
+<div id="tooltip" class="tooltip"></div>
+
+<script>
+    let currentLang = 'en';
+    let selectedFamily = null;
+
+    const i18n = {
+        en: {
+            title: "Environmental Sustainability of Energy Systems",
+            subtitle: "Three ecological principles: Renewable, Clean, Harmless",
+            axisX: "Renewable",
+            axisY: "Clean",
+            axisX_non: "Non-renewable",
+            axisX_cond: "Conditionally renewable",
+            axisX_ren: "Renewable",
+            axisY_less: "Less clean",
+            axisY_cleaner: "Cleaner",
+            dimColor: "Harmless",
+            legend_min: "More harm",
+            legend_max: "Less harm",
+            ideal: "Ideal Environmental Sustainability",
+            placeholder: "Select an energy family to view its sustainability analysis.",
+            why: "Why here?",
+            subsystems: "Sub-systems & Variations",
+            score: "Overall Score",
+            definitions: {
+                x: "Renewability: whether the energy resource regenerates on human timescales without depletion.",
+                y: "Natural assimilative capacity: impacts of emissions, effluents, waste, heat and noise remain within the environment’s ability to absorb them.",
+                color: "Ecological safety: low harm to ecosystems and living systems, including low-probability high-impact technological risks."
+            }
+        },
+        es: {
+            title: "Sostenibilidad Ambiental de los Sistemas Energéticos",
+            subtitle: "Tres principios ecológicos: Renovable, Limpio e Inocuo",
+            axisX: "Renovable",
+            axisY: "Limpio",
+            axisX_non: "No renovable",
+            axisX_cond: "Condicionalmente renovable",
+            axisX_ren: "Renovable",
+            axisY_less: "Menos limpio",
+            axisY_cleaner: "Más limpio",
+            dimColor: "Inocuo",
+            legend_min: "Más daño",
+            legend_max: "Menos daño",
+            ideal: "Sostenibilidad Ambiental Ideal",
+            placeholder: "Selecciona una familia de energía para ver su análisis de sostenibilidad.",
+            why: "¿Por qué aquí?",
+            subsystems: "Subsistemas y Variaciones",
+            score: "Puntaje Global",
+            definitions: {
+                x: "Renovabilidad: si el recurso energético se regenera en escalas de tiempo humanas sin agotarse.",
+                y: "Capacidad natural de asimilación: los impactos de emisiones, efluentes, residuos, calor y ruido permanecen dentro de la capacidad del entorno para absorberlos.",
+                color: "Seguridad ecológica: bajo daño a ecosistemas y seres vivos, incluyendo riesgos tecnológicos de alto impacto."
+            }
+        }
+    };
+
+    const energyData = [
+        { id: 1, name: "Fossil Fuels (no CCS)", icon: "⛽", r: 1, c: 1, h: 1, subs: ["Coal subcritical", "Coal supercritical", "Oil plant", "Diesel genset", "OCGT gas", "CCGT gas", "Shale gas", "Tar sands", "Fossil CHP"] },
+        { id: 2, name: "Fossil Fuels with CCS", icon: "⛽", r: 1, c: 2, h: 2, subs: ["Coal CCS", "Gas CCS", "Blue hydrogen turbine", "Ammonia power"] },
+        { id: 3, name: "Nuclear Fission", icon: "☢", r: 1, c: 2, h: 2, subs: ["LWR", "Gen III+", "SMR", "Fast breeder", "Thorium"] },
+        { id: 4, name: "Nuclear Fusion", icon: "⚛", r: 3, c: 4, h: 4, subs: ["Fusion reactor designs"] },
+        { id: 5, name: "Solar Energy Systems", icon: "☀️", r: 3, c: 3, h: 4, subs: ["Utility PV", "Rooftop PV", "PV battery", "CSP", "CSP storage"] },
+        { id: 6, name: "Wind Energy Systems", icon: "🌬️", r: 3, c: 4, h: 4, subs: ["Onshore wind", "Offshore wind", "Wind storage"] },
+        { id: 7, name: "Hydropower", icon: "💧", r: 2, c: 3, h: 2, subs: ["Large dam", "Run-of-river", "Small hydro", "Pumped hydro"] },
+        { id: 8, name: "Geothermal Energy", icon: "🌋", r: 3, c: 4, h: 4, subs: ["Hydrothermal", "EGS"] },
+        { id: 9, name: "Marine Energy", icon: "🌊", r: 3, c: 3, h: 3, subs: ["Tidal", "Wave", "OTEC"] },
+        { id: 10, name: "Bioenergy", icon: "🌱", r: 2, c: 2, h: 2, subs: ["Biomass combustion", "Co-firing", "Biogas", "Landfill gas", "Waste-to-energy", "Biomass CHP"] },
+        { id: 11, name: "Hydrogen & Synthetic Fuels", icon: "⚡", r: 2, c: 3, h: 4, subs: ["Green hydrogen turbine", "Synthetic fuels"] },
+        { id: 12, name: "Energy Recovery & Efficiency Systems", icon: "🔁", r: 2, c: 4, h: 4, subs: ["Waste heat recovery"] }
+    ];
+
+    const familyRationales = {
+        1: { en: ["Non-renewable resource base.", "Impacts exceed natural assimilative capacity.", "High harm to living systems via pollution."], es: ["Base de recursos no renovables.", "Impactos superan capacidad asimilativa.", "Alto daño por contaminación."] },
+        2: { en: ["Still non-renewable resource.", "Reduces CO₂, but upstream methane remains.", "Adds infrastructure risks."], es: ["Sigue siendo no renovable.", "Reduce CO₂, pero persisten fugas aguas arriba.", "Suma riesgos de infraestructura."] },
+        3: { en: ["Low operational GHG, fuel is finite.", "Long-lived waste issues.", "Low-probability high-consequence risk."], es: ["Bajas emisiones, combustible finito.", "Problemas de residuos persistentes.", "Riesgo de baja probabilidad y alto impacto."] },
+        4: { en: ["Potentially abundant fuel.", "Lower long-lived waste than fission.", "Still in developmental stages."], es: ["Combustible abundante.", "Menos residuos que fisión.", "Aún en etapa de desarrollo."] },
+        5: { en: ["Flow-based renewable resource.", "Manufacturing material constraints.", "Low ecosystem risk in operation."], es: ["Recurso renovable por flujo.", "Límites por fabricación/materiales.", "Bajo riesgo ecosistémico en operación."] },
+        6: { en: ["Highly renewable resource.", "Low environmental loading.", "Manageable local impacts."], es: ["Recurso altamente renovable.", "Baja carga ambiental.", "Impactos locales gestionables."] },
+        7: { en: ["Renewable but context-limited.", "Disrupts ecosystems and biodiversity.", "Hydrology management is key."], es: ["Renovable pero limitado al contexto.", "Altera ecosistemas y biodiversidad.", "Gestión hidrológica clave."] },
+        8: { en: ["Flow-based heat resource.", "Generally controllable impacts.", "Strong sustainability balance."], es: ["Recurso de calor por flujo.", "Impactos controlables.", "Fuerte balance de sostenibilidad."] },
+        9: { en: ["Promising long-term resource.", "Uncertain ecological impacts at scale.", "Clean in principle."], es: ["Recurso prometedor a largo plazo.", "Impactos inciertos a escala.", "Limpio en principio."] },
+        10: { en: ["Renewability is conditional.", "Can exceed assimilative capacity.", "Pressure on land use."], es: ["Renovabilidad condicionada.", "Puede exceder capacidad asimilativa.", "Presión sobre uso del suelo."] },
+        11: { en: ["Depends on input energy.", "Conversion losses reduce efficiency.", "Hard-to-abate sector solution."], es: ["Depende del input energético.", "Pérdidas de conversión.", "Solución para sectores difíciles."] },
+        12: { en: ["Uses saved energy.", "Minimal additional load.", "System-wide benefits."], es: ["Usa energía ahorrada.", "Carga adicional mínima.", "Beneficios sistémicos."] }
+    };
+
+    const MARGIN = { top: 50, right: 60, bottom: 90, left: 70 };
+    const WIDTH = 600 - MARGIN.left - MARGIN.right;
+    const HEIGHT = 500 - MARGIN.top - MARGIN.bottom;
+
+    const scaleX = (val) => MARGIN.left + ((val - 1) / 2) * WIDTH;
+    const scaleY = (val) => MARGIN.top + HEIGHT - ((val - 1) / 4) * HEIGHT;
+    const getColor = (h) => ['#ef4444', '#f97316', '#eab308', '#84cc16', '#15803d'][h - 1] || '#94a3b8';
+    const getOverallScore = (r, c, h) => (((r === 1 ? 1 : r === 2 ? 3 : 5) + c + h) / 3).toFixed(1);
+
+    function init() {
+        renderStaticAxes();
+        renderBubbles();
+        updateUI();
+        document.getElementById('svg-chart').addEventListener('click', (e) => {
+            if (e.target.tagName === 'svg' || e.target.tagName === 'rect') {
+                selectedFamily = null;
+                renderBubbles();
+                updateCard();
+            }
+        });
+    }
+
+    function renderStaticAxes() {
+        const axisGroup = document.getElementById('axes-group');
+        const gridGroup = document.getElementById('grid-group');
+        for (let i = 1; i <= 3; i++) {
+            const x = scaleX(i);
+            gridGroup.innerHTML += `<line x1="${x}" y1="${MARGIN.top}" x2="${x}" y2="${MARGIN.top + HEIGHT}" class="grid-line" />`;
+        }
+        for (let i = 1; i <= 5; i++) {
+            const y = scaleY(i);
+            gridGroup.innerHTML += `<line x1="${MARGIN.left}" y1="${y}" x2="${MARGIN.left + WIDTH}" y2="${y}" class="grid-line" />`;
+        }
+        axisGroup.innerHTML += `<text x="${MARGIN.left + WIDTH / 2}" y="${MARGIN.top + HEIGHT + 65}" text-anchor="middle" class="axis-title" id="ui-label-x" onmouseover="showDef('x', event)" onmouseout="hideDef()">Renewable</text>`;
+        const yTitleX = MARGIN.left - 55;
+        const yTitleY = MARGIN.top + HEIGHT / 2;
+        axisGroup.innerHTML += `<text x="${yTitleX}" y="${yTitleY}" transform="rotate(-90, ${yTitleX}, ${yTitleY})" text-anchor="middle" class="axis-title" id="ui-label-y" onmouseover="showDef('y', event)" onmouseout="hideDef()">Clean</text>`;
+        axisGroup.innerHTML += `<text x="${scaleX(1)}" y="${MARGIN.top + HEIGHT + 40}" text-anchor="middle" class="axis-sublabel" id="ui-x-non">Non-renewable</text>`;
+        axisGroup.innerHTML += `<text x="${scaleX(2)}" y="${MARGIN.top + HEIGHT + 40}" text-anchor="middle" class="axis-sublabel" id="ui-x-cond">Conditionally renewable</text>`;
+        axisGroup.innerHTML += `<text x="${scaleX(3)}" y="${MARGIN.top + HEIGHT + 40}" text-anchor="middle" class="axis-sublabel" id="ui-x-ren">Renewable</text>`;
+        const lyX = MARGIN.left - 20;
+        axisGroup.innerHTML += `<text x="${lyX}" y="${scaleY(1)}" transform="rotate(-90, ${lyX}, ${scaleY(1)})" text-anchor="start" class="axis-sublabel" id="ui-y-less">Less clean</text>`;
+        axisGroup.innerHTML += `<text x="${lyX}" y="${scaleY(5)}" transform="rotate(-90, ${lyX}, ${scaleY(5)})" text-anchor="end" class="axis-sublabel" id="ui-y-cleaner">Cleaner</text>`;
+    }
+
+    function renderBubbles() {
+        const g = document.getElementById('bubbles-group');
+        g.innerHTML = '';
+        const coords = {};
+        energyData.forEach(d => {
+            const key = `${d.r}_${d.c}`;
+            if (!coords[key]) coords[key] = [];
+            coords[key].push(d);
+        });
+        Object.keys(coords).forEach(key => {
+            const group = coords[key];
+            group.forEach((d, index) => {
+                const overall = getOverallScore(d.r, d.c, d.h);
+                const radius = 12 + (overall * 3.5);
+                let offsetX = 0; let offsetY = 0;
+                if (group.length > 1) {
+                    const angle = (index / group.length) * 2 * Math.PI;
+                    const dist = radius * 0.8;
+                    offsetX = Math.cos(angle) * dist;
+                    offsetY = Math.sin(angle) * dist;
+                }
+                const cx = scaleX(d.r) + offsetX;
+                const cy = scaleY(d.c) + offsetY;
+                const isSelected = selectedFamily === d.id;
+                const bubbleWrap = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                bubbleWrap.setAttribute("class", "bubble");
+                bubbleWrap.style.opacity = (selectedFamily && !isSelected) ? '0.2' : '1';
+                if (isSelected) {
+                    const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    halo.setAttribute("cx", cx); halo.setAttribute("cy", cy); halo.setAttribute("r", radius + 6);
+                    halo.setAttribute("class", "bubble-halo"); halo.setAttribute("stroke", getColor(d.h));
+                    bubbleWrap.appendChild(halo);
+                }
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", cx); circle.setAttribute("cy", cy); circle.setAttribute("r", radius);
+                circle.setAttribute("fill", getColor(d.h)); circle.setAttribute("stroke", "white"); circle.setAttribute("stroke-width", "2");
+                circle.addEventListener('mouseover', (e) => showTooltip(d, e));
+                circle.addEventListener('mouseout', hideTooltip);
+                circle.addEventListener('click', (e) => selectFamily(d.id));
+                const icon = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                icon.setAttribute("x", cx); icon.setAttribute("y", cy); icon.setAttribute("class", "bubble-icon");
+                icon.textContent = d.icon;
+                bubbleWrap.appendChild(circle);
+                bubbleWrap.appendChild(icon);
+                if (isSelected) {
+                    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    label.setAttribute("x", cx); label.setAttribute("y", cy + radius + 15);
+                    label.setAttribute("class", "bubble-text-label"); label.textContent = d.name;
+                    bubbleWrap.appendChild(label);
+                }
+                g.appendChild(bubbleWrap);
+            });
+        });
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = Array.from(document.querySelectorAll('.lang-btn')).find(b => b.textContent.toLowerCase() === lang);
+        if (activeBtn) activeBtn.classList.add('active');
+        updateUI();
+        updateCard();
+        renderBubbles();
+    }
+
+    function updateUI() {
+        const text = i18n[currentLang];
+        document.getElementById('ui-title').textContent = text.title;
+        document.getElementById('ui-subtitle').textContent = text.subtitle;
+        document.getElementById('ui-label-x').textContent = text.axisX;
+        document.getElementById('ui-label-y').textContent = text.axisY;
+        document.getElementById('ui-ideal-label').textContent = text.ideal;
+        document.getElementById('ui-x-non').textContent = text.axisX_non;
+        document.getElementById('ui-x-cond').textContent = text.axisX_cond;
+        document.getElementById('ui-x-ren').textContent = text.axisX_ren;
+        document.getElementById('ui-y-less').textContent = text.axisY_less;
+        document.getElementById('ui-y-cleaner').textContent = text.axisY_cleaner;
+        document.getElementById('ui-legend-title').textContent = text.dimColor;
+        document.getElementById('ui-legend-low').textContent = text.legend_min;
+        document.getElementById('ui-legend-high').textContent = text.legend_max;
+        if (!selectedFamily) document.getElementById('ui-placeholder').textContent = text.placeholder;
+    }
+
+    function showTooltip(d, e) {
+        const tooltip = document.getElementById('tooltip');
+        const overall = getOverallScore(d.r, d.c, d.h);
+        tooltip.innerHTML = `<strong>${d.name}</strong><br>R: ${d.r} | C: ${d.c} | H: ${d.h}<br><em>${i18n[currentLang].score}: ${overall}/5</em>`;
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX + 15) + 'px'; tooltip.style.top = (e.clientY + 15) + 'px';
+    }
+
+    function hideTooltip() { document.getElementById('tooltip').style.display = 'none'; }
+
+    function showDef(type, e) {
+        const tooltip = document.getElementById('tooltip');
+        tooltip.innerHTML = i18n[currentLang].definitions[type];
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX + 10) + 'px'; tooltip.style.top = (e.clientY + 10) + 'px';
+    }
+    function hideDef() { hideTooltip(); }
+
+    function selectFamily(id) {
+        selectedFamily = id;
+        renderBubbles();
+        updateCard();
+    }
+
+    function updateCard() {
+        const panel = document.getElementById('tech-card-content');
+        if (!selectedFamily) {
+            panel.innerHTML = `<div class="card-placeholder" id="ui-placeholder">${i18n[currentLang].placeholder}</div>`;
+            return;
+        }
+        const d = energyData.find(x => x.id === selectedFamily);
+        const overall = getOverallScore(d.r, d.c, d.h);
+        const rationale = familyRationales[d.id][currentLang];
+        const text = i18n[currentLang];
+        panel.innerHTML = `
+            <div class="card-header">
+                <h3 class="card-title">${d.icon} ${d.name}</h3>
+            </div>
+            <div class="overall-score">${text.score}: ${overall} / 5</div>
+            <div class="card-metrics">
+                <div class="metric"><span class="metric-val">${d.r}</span><span class="metric-label">${text.axisX}</span></div>
+                <div class="metric"><span class="metric-val">${d.c}</span><span class="metric-label">${text.axisY}</span></div>
+                <div class="metric"><span class="metric-val" style="color:${getColor(d.h)}">${d.h}</span><span class="metric-label">${text.dimColor}</span></div>
+            </div>
+            <div class="section-title">${text.why}</div>
+            <ul class="bullets">${rationale.map(bullet => `<li>${bullet}</li>`).join('')}</ul>
+            <div class="subsystems">
+                <details>
+                    <summary>${text.subsystems}</summary>
+                    <ul class="subsystems-list">${d.subs.map(s => `<li>${s}</li>`).join('')}</ul>
+                </details>
+            </div>
+        `;
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
